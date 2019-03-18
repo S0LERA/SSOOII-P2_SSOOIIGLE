@@ -1,1 +1,32 @@
- 
+variable global: resultados -> vector<informacion>
+
+estructura informacion{
+int id Hilo
+int linea inicio
+int linea final
+int linea encontrada
+string palabra anterior
+string palabra encontrada
+string palabra posterior
+}
+
+F1: archivo::abrirArchivo(nombre_archivo);
+-Abrir archivo
+
+F2: vector<int[2]>::obtenerLineas(archivo)
+-F1
+-Obtener numero de lineas
+-Dividir en partes iguales
+
+F5: creaHilos();
+-Recorrer vector lineas de F2
+-Crear tantos hilos como entradas tenga el vector(buscarPalabra)
+
+F3: buscarPalabra(archivo, palabra, linea inicial,linea final);
+-F1
+-Posicionarse en la linea inicial
+-Hasta que no sea la linea final: Buscar palabra
+-Añadir al vector resultados la informacion con mutex
+
+F4: imprimeResultados();
+-Recorrer la lista e imprimir
