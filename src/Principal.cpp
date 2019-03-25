@@ -2,6 +2,9 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <thread>
+
+std::vector<std::thread> v_hilos;
 
 /* F1: Abrir Archivo */
 std::ifstream abrirArchivo(std::string nombre_archivo) {
@@ -46,14 +49,18 @@ std::vector<int> obtenerLineas(std::ifstream &fs, int n_hilos){
 
 /* F3: buscar una palabra en un fichero */
 
-void buscarPalabra(std::ifstream &fs, std::string keyword) {
+void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int linea_final) {
 	fs.clear();
 	fs.seekg(0);
-	std::string line;
+	std::string linea;
 	int repeticiones = 0;
-	while (getline(fs, line)) {
-		if (line.find(keyword) != std::string::npos) {
-			repeticiones++;
+	int contador =0;
+	while (getline(fs, linea)) {
+		contador ++;
+		if(contador>= linea_inicial && contador<=linea_final){
+			if (linea.find(keyword) != std::string::npos) {
+				repeticiones++;
+			}
 		}
 	}
 	if(repeticiones == 0){
@@ -67,16 +74,26 @@ void buscarPalabra(std::ifstream &fs, std::string keyword) {
 void imprimeResultados(std::vector<int> aux){
 	int id_hilo = 0;
 	for (int i = 0; i < aux.size(); i+=2) {
-		std::cout << "Hilo" << id_hilo << ", lineas:" << aux.at(i) << " , " << aux.at(i+1) << std::endl;
+		std::cout << "Hilo " << id_hilo << ", lineas:" << aux.at(i) << " , " << aux.at(i+1) << std::endl;
 		id_hilo++;
 	}
 }
 
+/* F5: crea los hilos de busqueda
+
+void creaHilos(int numHilos){
+	for (int i = 0; i < numHilos; i++) {
+		std::thread hilo(buscarPalabra);
+		hilo.join();
+	}
+}
+*/
+
 int main(int argc, char *argv[]) {
 	std::ifstream archivo = abrirArchivo(argv[1]);
-	std::vector<int> v_lineas = obtenerLineas(archivo, atoi(argv[2]));
-	buscarPalabra(archivo, "hola");
+	std::vector<int> v_lineas = obtenerLineas(archivo, atoi(argv[3]));
+	std::thread hilo(buscarPalabra,std::ref(archivo), argv[2],0,30);
+	hilo.join();
 	imprimeResultados(v_lineas);
-
 	return EXIT_SUCCESS;
 }
