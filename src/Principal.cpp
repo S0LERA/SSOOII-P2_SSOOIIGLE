@@ -12,6 +12,8 @@ std::ifstream abrirArchivo(std::string nombre_archivo) {
 
 /* F2: Obtener lineas archivo */
 std::vector<int> obtenerLineas(std::ifstream &fs, int n_hilos){
+	fs.clear();
+	fs.seekg(0);
 	std::vector<int> v_lineas;
 	int lineas = 0;
 	int particion = 0;
@@ -28,7 +30,7 @@ std::vector<int> obtenerLineas(std::ifstream &fs, int n_hilos){
 
 	for (int i = 0; i < n_hilos; i++) {
 		v_lineas.push_back(linea_i);
-		linea_f = linea_i + particion-1;
+		linea_f = linea_i + particion;
 		v_lineas.push_back(linea_f);
 		linea_i = linea_f+1;
 	}
@@ -42,6 +44,26 @@ std::vector<int> obtenerLineas(std::ifstream &fs, int n_hilos){
 	return v_lineas;
 }
 
+/* F3: buscar una palabra en un fichero */
+
+void buscarPalabra(std::ifstream &fs, std::string keyword) {
+	fs.clear();
+	fs.seekg(0);
+	std::string line;
+	int repeticiones = 0;
+	while (getline(fs, line)) {
+		if (line.find(keyword) != std::string::npos) {
+			repeticiones++;
+		}
+	}
+	if(repeticiones == 0){
+		std::cout << "Palabra: "<< keyword << "No encontrada" << std::endl;
+	}else{
+		std::cout << "Palabra: "<< keyword << " Encontrada: "<< repeticiones << " veces." << std::endl;
+	}
+}
+
+/* F4: imprimir los resultados de la busqueda por pantalla */
 void imprimeResultados(std::vector<int> aux){
 	int id_hilo = 0;
 	for (int i = 0; i < aux.size(); i+=2) {
@@ -53,6 +75,8 @@ void imprimeResultados(std::vector<int> aux){
 int main(int argc, char *argv[]) {
 	std::ifstream archivo = abrirArchivo(argv[1]);
 	std::vector<int> v_lineas = obtenerLineas(archivo, atoi(argv[2]));
+	buscarPalabra(archivo, "hola");
 	imprimeResultados(v_lineas);
+
 	return EXIT_SUCCESS;
 }
