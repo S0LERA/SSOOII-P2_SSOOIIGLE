@@ -3,8 +3,21 @@
 #include <vector>
 #include <string>
 #include <thread>
+#include <mutex>
 
+std::mutex sem;
 std::vector<std::thread> v_hilos;
+
+struct resultados{
+	int id_hilo;
+	std::string palabra_encontrada;
+	int numero_linea;
+	int inicio_fragmento;
+	int fin_fragmento;
+	std::string linea;
+};
+
+std::vector<resultados> v_resultados;
 
 /* F1: Abrir Archivo */
 std::ifstream abrirArchivo(std::string nombre_archivo) {
@@ -50,15 +63,23 @@ std::vector<int> obtenerLineas(std::ifstream &fs, int n_hilos){
 /* F3: buscar una palabra en un fichero */
 
 void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int linea_final) {
+	sem.lock();
 	fs.clear();
 	fs.seekg(0);
 	std::string linea;
 	int repeticiones = 0;
 	int contador =0;
+	resultados res;
+	res.inicio_fragmento = linea_inicial;
+	res.fin_fragmento = linea_final;
 	while (getline(fs, linea)) {
 		contador ++;
 		if(contador>= linea_inicial && contador<=linea_final){
 			if (linea.find(keyword) != std::string::npos) {
+				res.numero_linea = contador;
+				res.palabra_encontrada = keyword;
+				res.linea = linea;
+				v_resultados.push_back(res);
 				repeticiones++;
 			}
 		}
@@ -68,14 +89,26 @@ void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int
 	}else{
 		std::cout << "Palabra: "<< keyword << " Encontrada: "<< repeticiones << " veces." << std::endl;
 	}
+	sem.unlock();
 }
 
 /* F4: imprimir los resultados de la busqueda por pantalla */
 void imprimeResultados(std::vector<int> aux){
 	int id_hilo = 0;
+	resultados res;
 	for (int i = 0; i < aux.size(); i+=2) {
 		std::cout << "Hilo " << id_hilo << ", lineas:" << aux.at(i) << " , " << aux.at(i+1) << std::endl;
 		id_hilo++;
+	}
+	std::cout << "--------------" << '\n';
+	for(int i = 0; i < v_resultados.size();i++){
+		res = v_resultados.at(i);
+		std::cout << "Resultado: " << '\n';
+		std::cout << "Palabra encontrada: " << res.palabra_encontrada << '\n';
+		std::cout << "Fragmento: " << res.inicio_fragmento <<" -> " << res.fin_fragmento <<'\n';
+		std::cout << "Linea nº: " << res.numero_linea <<'\n';
+		std::cout << "Linea completa: " << res.linea <<'\n';
+		std::cout << "--------------" << '\n';
 	}
 }
 
@@ -92,8 +125,10 @@ void creaHilos(int numHilos){
 int main(int argc, char *argv[]) {
 	std::ifstream archivo = abrirArchivo(argv[1]);
 	std::vector<int> v_lineas = obtenerLineas(archivo, atoi(argv[3]));
-	std::thread hilo(buscarPalabra,std::ref(archivo), argv[2],0,30);
+	std::thread hilo2(buscarPalabra,std::ref(archivo), "medida",0,3200);
+	std::thread hilo(buscarPalabra,std::ref(archivo), "medida",3201,6525);
 	hilo.join();
+	hilo2.join();
 	imprimeResultados(v_lineas);
 	return EXIT_SUCCESS;
 }
