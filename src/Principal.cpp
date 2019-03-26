@@ -63,24 +63,23 @@ std::vector<int> obtenerLineas(std::ifstream &fs, int n_hilos){
 /* F3: buscar una palabra en un fichero */
 
 void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int linea_final) {
-	sem.lock();
-	fs.clear();
-	fs.seekg(0);
 	std::string linea;
 	int repeticiones = 0;
 	int contador =0;
 	resultados res;
-	res.inicio_fragmento = linea_inicial;
-	res.fin_fragmento = linea_final;
 	while (getline(fs, linea)) {
 		contador ++;
 		if(contador>= linea_inicial && contador<=linea_final){
 			if (linea.find(keyword) != std::string::npos) {
+				sem.lock();
+				res.inicio_fragmento = linea_inicial;
+				res.fin_fragmento = linea_final;
 				res.numero_linea = contador;
 				res.palabra_encontrada = keyword;
 				res.linea = linea;
 				v_resultados.push_back(res);
 				repeticiones++;
+				sem.unlock();
 			}
 		}
 	}
@@ -89,7 +88,6 @@ void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int
 	}else{
 		std::cout << "Palabra: "<< keyword << " Encontrada: "<< repeticiones << " veces." << std::endl;
 	}
-	sem.unlock();
 }
 
 /* F4: imprimir los resultados de la busqueda por pantalla */
@@ -108,8 +106,10 @@ void imprimeResultados(std::vector<int> aux){
 }
 
 /* F5: crea los hilos de busqueda */
-void creaHilos(std::vector<int> numHilos, std::ifstream &archivo, std::string keyword){
+void creaHilos(std::vector<int> numHilos,  std::string keyword, std::string nombrearchivo){
+	std::ifstream archivo;
 	for (unsigned int i = 0; i < numHilos.size(); i+=2) {
+		archivo = abrirArchivo(nombrearchivo);
 		std::thread hilo(buscarPalabra,std::ref(archivo), keyword,numHilos.at(i),numHilos.at(i+1));
 		hilo.join();
 	}
@@ -118,7 +118,7 @@ void creaHilos(std::vector<int> numHilos, std::ifstream &archivo, std::string ke
 int main(int argc, char *argv[]) {
 	std::ifstream archivo = abrirArchivo(argv[1]);
 	std::vector<int> v_lineas = obtenerLineas(archivo, atoi(argv[3]));
-	creaHilos(v_lineas,archivo,"medida");
+	creaHilos(v_lineas,"medida",argv[1]);
 	imprimeResultados(v_lineas);
 	return EXIT_SUCCESS;
 }
