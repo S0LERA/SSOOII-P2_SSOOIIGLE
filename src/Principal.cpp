@@ -94,14 +94,9 @@ void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int
 
 /* F4: imprimir los resultados de la busqueda por pantalla */
 void imprimeResultados(std::vector<int> aux){
-	int id_hilo = 0;
 	resultados res;
-	for (int i = 0; i < aux.size(); i+=2) {
-		std::cout << "Hilo " << id_hilo << ", lineas:" << aux.at(i) << " , " << aux.at(i+1) << std::endl;
-		id_hilo++;
-	}
 	std::cout << "--------------" << '\n';
-	for(int i = 0; i < v_resultados.size();i++){
+	for(unsigned int i = 0; i < v_resultados.size();i++){
 		res = v_resultados.at(i);
 		std::cout << "Resultado: " << '\n';
 		std::cout << "Palabra encontrada: " << res.palabra_encontrada << '\n';
@@ -112,23 +107,18 @@ void imprimeResultados(std::vector<int> aux){
 	}
 }
 
-/* F5: crea los hilos de busqueda
-
-void creaHilos(int numHilos){
-	for (int i = 0; i < numHilos; i++) {
-		std::thread hilo(buscarPalabra);
+/* F5: crea los hilos de busqueda */
+void creaHilos(std::vector<int> numHilos, std::ifstream &archivo, std::string keyword){
+	for (unsigned int i = 0; i < numHilos.size(); i+=2) {
+		std::thread hilo(buscarPalabra,std::ref(archivo), keyword,numHilos.at(i),numHilos.at(i+1));
 		hilo.join();
 	}
 }
-*/
 
 int main(int argc, char *argv[]) {
 	std::ifstream archivo = abrirArchivo(argv[1]);
 	std::vector<int> v_lineas = obtenerLineas(archivo, atoi(argv[3]));
-	std::thread hilo2(buscarPalabra,std::ref(archivo), "medida",0,3200);
-	std::thread hilo(buscarPalabra,std::ref(archivo), "medida",3201,6525);
-	hilo.join();
-	hilo2.join();
+	creaHilos(v_lineas,archivo,"medida");
 	imprimeResultados(v_lineas);
 	return EXIT_SUCCESS;
 }
