@@ -4,19 +4,43 @@
 #include <string>
 #include <thread>
 #include <mutex>
-
-std::mutex sem;
-std::vector<std::thread> v_hilos;
+#include <sstream>
+#include <iterator>
+#include <cstring>
 
 struct resultados{
 	int id_hilo;
 	std::string palabra_encontrada;
+	std::string palabra_anterior;
+	std::string palabra_posterior;
 	int numero_linea;
 	int inicio_fragmento;
 	int fin_fragmento;
 	std::string linea;
 };
 
+struct signos_puntuacion: std::ctype<char>
+{
+	signos_puntuacion(): std::ctype<char>(get_tabla()) {}
+
+	static std::ctype_base::mask const* get_tabla()
+	{
+		typedef std::ctype<char> cctype;
+		static const cctype::mask *const_rc= cctype::classic_table();
+
+		static cctype::mask rc[cctype::table_size];
+		std::memcpy(rc, const_rc, cctype::table_size * sizeof(cctype::mask));
+
+		rc[','] = std::ctype_base::space;
+		rc['.'] = std::ctype_base::space;
+		rc['!'] = std::ctype_base::space;
+		rc['?'] = std::ctype_base::space;
+		return &rc[0];
+	}
+};
+
+std::mutex sem;
+std::vector<std::thread> v_hilos;
 std::vector<resultados> v_resultados;
 
 /* F1: Abrir Archivo */
@@ -60,27 +84,43 @@ std::vector<int> obtenerLineas(std::ifstream &fs, int n_hilos){
 	return v_lineas;
 }
 
+/* FAUX Convertir string a vector */
+std::vector<std::string> vectorLinea(std::string s){
+	std::stringstream ss(s);
+	ss.imbue(std::locale(std::locale(), new signos_puntuacion()));
+	std::istream_iterator<std::string> begin(ss);
+	std::istream_iterator<std::string> end;
+	std::vector<std::string> vstrings(begin, end);
+	return vstrings;
+}
+
 /* F3: buscar una palabra en un fichero */
 
 void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int linea_final, int id_hilo) {
+	std::vector<std::string> vector_linea;
 	std::string linea;
 	int repeticiones = 0;
 	int contador =0;
 	resultados res;
-	while (getline(fs, linea)) {
+	while (getline(fs, linea)) {																			//Obtener lineas del archivo
+		vector_linea = vectorLinea(linea);															//Pasar linea a vector
 		contador ++;
-		if(contador>= linea_inicial && contador<=linea_final){
-			if (linea.find(keyword) != std::string::npos) {
-				sem.lock();
-				res.id_hilo = id_hilo;
-				res.inicio_fragmento = linea_inicial;
-				res.fin_fragmento = linea_final;
-				res.numero_linea = contador;
-				res.palabra_encontrada = keyword;
-				res.linea = linea;
-				v_resultados.push_back(res);
-				repeticiones++;
-				sem.unlock();
+		if(contador>= linea_inicial && contador<=linea_final){ 					//Para posicionar a cada hilo en su sitio
+			for (unsigned int i = 0; i < vector_linea.size(); i++) {			//Recorrer el vactor con las palabras de la linea
+				if (vector_linea.at(i) == keyword) {												//Buscar la palabra en la linea
+					res.id_hilo = id_hilo;
+					res.inicio_fragmento = linea_inicial;
+					res.fin_fragmento = linea_final;
+					res.numero_linea = contador;
+					res.palabra_encontrada = keyword;
+					res.palabra_anterior = vector_linea.at(i-1);
+					res.palabra_posterior = vector_linea.at(i+1);
+					res.linea = linea;
+					sem.lock();
+					v_resultados.push_back(res);
+					repeticiones++;
+					sem.unlock();
+				}
 			}
 		}
 	}
@@ -122,7 +162,7 @@ void creaHilos(std::vector<int> numHilos,  std::string keyword, std::string nomb
 int main(int argc, char *argv[]) {
 	std::ifstream archivo = abrirArchivo(argv[1]);
 	std::vector<int> v_lineas = obtenerLineas(archivo, atoi(argv[3]));
-	creaHilos(v_lineas,"medida",argv[1]);
+	creaHilos(v_lineas,"hola",argv[1]);
 	imprimeResultados(v_lineas);
 	return EXIT_SUCCESS;
 }
