@@ -113,8 +113,16 @@ void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int
 					res.fin_fragmento = linea_final;
 					res.numero_linea = contador;
 					res.palabra_encontrada = keyword;
-					res.palabra_anterior = vector_linea.at(i-1);
-					res.palabra_posterior = vector_linea.at(i+1);
+					try{
+						res.palabra_anterior = vector_linea.at(i-1);
+					}catch(const std::out_of_range& e){
+						res.palabra_anterior = "";
+					}
+					try{
+						res.palabra_posterior = vector_linea.at(i+1);
+					}catch(const std::out_of_range& e){
+						res.palabra_posterior = "";
+					}
 					res.linea = linea;
 					sem.lock();
 					v_resultados.push_back(res);
@@ -142,7 +150,7 @@ void imprimeResultados(std::vector<int> aux){
 		std::cout << "Palabra encontrada: " << res.palabra_encontrada << '\n';
 		std::cout << "Fragmento: " << res.inicio_fragmento <<" -> " << res.fin_fragmento <<'\n';
 		std::cout << "Linea nº: " << res.numero_linea <<'\n';
-		std::cout << "Linea completa: " << res.linea <<'\n';
+		std::cout << "Linea: " << res.palabra_anterior <<" "<<res.palabra_encontrada<<" "<<res.palabra_posterior<<'\n';
 		std::cout << "--------------" << '\n';
 	}
 }
@@ -162,7 +170,7 @@ void creaHilos(std::vector<int> numHilos,  std::string keyword, std::string nomb
 int main(int argc, char *argv[]) {
 	std::ifstream archivo = abrirArchivo(argv[1]);
 	std::vector<int> v_lineas = obtenerLineas(archivo, atoi(argv[3]));
-	creaHilos(v_lineas,"hola",argv[1]);
+	creaHilos(v_lineas,argv[2],argv[1]);
 	imprimeResultados(v_lineas);
 	return EXIT_SUCCESS;
 }
