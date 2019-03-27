@@ -5,9 +5,10 @@ Se desea implementar un buscador de palabras multihilo en un fichero, que cuente
 
 Uso:
 `make compilar`
+
 `./src/Principal NOMBREFICHERO.TXT PALABRAABUSCAR NUMEROHILOS`
 
-Versión 1.5:
+## Versión 1.5:
 - Versión del programa a falta de retoques finales y formateo de la salida.
 - Bugs:
 	- El makefile no deja hacer prueba, para probar, ejecutar directamente el programa sobre el terminal.
