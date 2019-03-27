@@ -62,7 +62,7 @@ std::vector<int> obtenerLineas(std::ifstream &fs, int n_hilos){
 
 /* F3: buscar una palabra en un fichero */
 
-void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int linea_final) {
+void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int linea_final, int id_hilo) {
 	std::string linea;
 	int repeticiones = 0;
 	int contador =0;
@@ -72,6 +72,7 @@ void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int
 		if(contador>= linea_inicial && contador<=linea_final){
 			if (linea.find(keyword) != std::string::npos) {
 				sem.lock();
+				res.id_hilo = id_hilo;
 				res.inicio_fragmento = linea_inicial;
 				res.fin_fragmento = linea_final;
 				res.numero_linea = contador;
@@ -84,9 +85,9 @@ void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int
 		}
 	}
 	if(repeticiones == 0){
-		std::cout << "Palabra: "<< keyword << "No encontrada" << std::endl;
+		std::cout << "Hilo: " << id_hilo <<" Palabra: "<< keyword << " No encontrada" << std::endl;
 	}else{
-		std::cout << "Palabra: "<< keyword << " Encontrada: "<< repeticiones << " veces." << std::endl;
+		std::cout << "Hilo: " << id_hilo << " Palabra: "<< keyword << " Encontrada: "<< repeticiones << " veces." << std::endl;
 	}
 }
 
@@ -97,6 +98,7 @@ void imprimeResultados(std::vector<int> aux){
 	for(unsigned int i = 0; i < v_resultados.size();i++){
 		res = v_resultados.at(i);
 		std::cout << "Resultado: " << '\n';
+		std::cout << "Hilo: " << res.id_hilo << '\n';
 		std::cout << "Palabra encontrada: " << res.palabra_encontrada << '\n';
 		std::cout << "Fragmento: " << res.inicio_fragmento <<" -> " << res.fin_fragmento <<'\n';
 		std::cout << "Linea nº: " << res.numero_linea <<'\n';
@@ -108,10 +110,12 @@ void imprimeResultados(std::vector<int> aux){
 /* F5: crea los hilos de busqueda */
 void creaHilos(std::vector<int> numHilos,  std::string keyword, std::string nombrearchivo){
 	std::ifstream archivo;
+	int id_hilo = 0;
 	for (unsigned int i = 0; i < numHilos.size(); i+=2) {
 		archivo = abrirArchivo(nombrearchivo);
-		std::thread hilo(buscarPalabra,std::ref(archivo), keyword,numHilos.at(i),numHilos.at(i+1));
+		std::thread hilo(buscarPalabra,std::ref(archivo), keyword,numHilos.at(i),numHilos.at(i+1),id_hilo);
 		hilo.join();
+		id_hilo++;
 	}
 }
 
