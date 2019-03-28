@@ -1,34 +1,36 @@
 /****************************************************************************
- * Projecto:                Segunda Práctica de SSOO II : SSOOGGLE
- *
- * Nombre del programa:     SSOOGGLE.c
- *
- * Autor:                   Pablo Rodríguez Solera
- *
- * Fecha de creación:       18/03/2019
- *
- * Proposito:               - Busqueda de una palabra en un fichero utilizando
- *														la programación multihilo.
- *													-	Gestión de la sincronización entre los hilos.
- *
- * Historial de revisión:
- *
- * Fecha        Autor    Ref   Revisión
- * 24/03/2019   Pablo    1     Avance en las funciones del proyecto
- *
- * 25/03/2019		Pablo		 2		 Versión secuencial lista, estructuras listas
- *
- * 25/03/2019   Pablo		 3		 Versión con un hilo
- *
- * 26/03/2019   Pablo		 4		 Concurrencia lista
- *
- * 27/03/2019   Pablo		 5		 Cambio en la busqueda de palabra_posterior
- *
- * 27/03/2019   Pablo		 6		 Palabra anterior y posterior encontrada
- *
- * 28/03/2019   Pablo		 7		 Formato de salida listo
- *
- * **************************************************************************/
+* Projecto:                Segunda Práctica de SSOO II : SSOOGGLE
+*
+* Nombre del programa:     SSOOGGLE.c
+*
+* Autor:                   Pablo Rodríguez Solera
+*
+* Fecha de creación:       18/03/2019
+*
+* Proposito:               - Busqueda de una palabra en un fichero utilizando
+*														la programación multihilo.
+*												  -	Gestión de la sincronización entre los hilos.
+*
+* Historial de revisión:
+*
+* Fecha        Autor    Ref   Revisión
+* 24/03/2019   Pablo    1     Avance en las funciones del proyecto
+*
+* 25/03/2019		Pablo		 2		 Versión secuencial lista, estructuras listas
+*
+* 25/03/2019   Pablo		 3		 Versión con un hilo
+*
+* 26/03/2019   Pablo		 4		 Concurrencia lista
+*
+* 27/03/2019   Pablo		 5		 Cambio en la busqueda de palabra_posterior
+*
+* 27/03/2019   Pablo		 6		 Palabra anterior y posterior encontrada
+*
+* 28/03/2019   Pablo		 7		 Formato de salida listo
+*
+* 28/03/2019   Pablo		 8		 Cambiado metodo de join y arreglada concurrencia
+*
+* **************************************************************************/
 
 #include <iostream>
 #include <fstream>
@@ -39,6 +41,8 @@
 #include <sstream>
 #include <iterator>
 #include <cstring>
+#include <algorithm>
+#include <functional>
 
 struct resultados{
 	int id_hilo;
@@ -59,14 +63,14 @@ struct signos_puntuacion: std::ctype<char>
 		typedef std::ctype<char> cctype;
 		static const cctype::mask *const_rc= cctype::classic_table();
 
-		static cctype::mask rc[cctype::table_size];
-		std::memcpy(rc, const_rc, cctype::table_size * sizeof(cctype::mask));
+		static cctype::mask sp[cctype::table_size];
+		std::memcpy(sp, const_rc, cctype::table_size * sizeof(cctype::mask));
 
-		rc[','] = std::ctype_base::space;
-		rc['.'] = std::ctype_base::space;
-		rc['!'] = std::ctype_base::space;
-		rc['?'] = std::ctype_base::space;
-		return &rc[0];
+		sp[','] = std::ctype_base::space;
+		sp['.'] = std::ctype_base::space;
+		sp['!'] = std::ctype_base::space;
+		sp['?'] = std::ctype_base::space;
+		return &sp[0];
 	}
 };
 
@@ -126,10 +130,10 @@ std::vector<std::string> vectorLinea(std::string s){
 }
 
 /* Buscar una palabra en un fichero */
-void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int linea_final, int id_hilo) {
+void buscarPalabra(std::string nombrearchivo, std::string keyword,int linea_inicial, int linea_final, int id_hilo) {
+	std::ifstream fs = abrirArchivo(nombrearchivo);
 	std::vector<std::string> vector_linea;
 	std::string linea;
-	int repeticiones = 0;
 	int contador =0;
 	resultados res;
 	while (getline(fs, linea)) {																			//Obtener lineas del archivo
@@ -156,7 +160,6 @@ void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int
 					sem.lock();
 					v_resultados.push_back(res);
 					sem.unlock();
-					repeticiones++;
 				}
 			}
 		}
@@ -175,14 +178,12 @@ void imprimeResultados(std::vector<int> aux){
 
 /* Crea los hilos de busqueda */
 void creaHilos(std::vector<int> numHilos,  std::string keyword, std::string nombrearchivo){
-	std::ifstream archivo;
 	int id_hilo = 0;
 	for (unsigned int i = 0; i < numHilos.size(); i+=2) {
-		archivo = abrirArchivo(nombrearchivo);
-		std::thread hilo(buscarPalabra,std::ref(archivo), keyword,numHilos.at(i),numHilos.at(i+1),id_hilo);
-		hilo.join();
+		v_hilos.push_back(std::thread(buscarPalabra,nombrearchivo,keyword,numHilos.at(i),numHilos.at(i+1),id_hilo));
 		id_hilo++;
 	}
+	for_each(v_hilos.begin(),v_hilos.end(),std::mem_fn(&std::thread::join));
 }
 
 int main(int argc, char *argv[]) {
