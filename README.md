@@ -3,11 +3,20 @@ Repositorio para la segunda pŕactica de la Asignatura Sistemas Operativos II de
 
 Se desea implementar un buscador de palabras multihilo en un fichero, que cuente con gestión de la concurrencia entre los hilos que funcione por línea de comandos.
 
-Uso:
+## Uso:
 `make compilar`
-`./src/Principal NOMBREFICHERO.TXT PALABRAABUSCAR NUMEROHILOS`
+ - Para compilar el programa
 
-Versión 1.5:
+ El archivo donde se quiere buscar debe estar en la ruta del makefile.
+
+`make SS00GLE FICHERO=prueba2 PALABRA=trabajo HILOS=4`
+ - FICHERO: es la ruta del fichero donde se va a buscar la palabra, sin el .txt.
+ - PALABRA: es la palabra a buscar.
+ - HILOS = es el numero de hilos que se desea que busquen.
+
+## Versiones:
+### Versión 1.5:
 - Versión del programa a falta de retoques finales y formateo de la salida.
-- Bugs:
-	- El makefile no deja hacer prueba, para probar, ejecutar directamente el programa sobre el terminal.
+
+### Versión 2.0:
+- El programa está completo. Se puede ejecutar desde el make, el formateo de salida está listo.

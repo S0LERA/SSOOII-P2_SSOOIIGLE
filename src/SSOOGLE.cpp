@@ -1,3 +1,35 @@
+/****************************************************************************
+ * Projecto:                Segunda Práctica de SSOO II : SSOOGGLE
+ *
+ * Nombre del programa:     SSOOGGLE.c
+ *
+ * Autor:                   Pablo Rodríguez Solera
+ *
+ * Fecha de creación:       18/03/2019
+ *
+ * Proposito:               - Busqueda de una palabra en un fichero utilizando
+ *														la programación multihilo.
+ *													-	Gestión de la sincronización entre los hilos.
+ *
+ * Historial de revisión:
+ *
+ * Fecha        Autor    Ref   Revisión
+ * 24/03/2019   Pablo    1     Avance en las funciones del proyecto
+ *
+ * 25/03/2019		Pablo		 2		 Versión secuencial lista, estructuras listas
+ *
+ * 25/03/2019   Pablo		 3		 Versión con un hilo
+ *
+ * 26/03/2019   Pablo		 4		 Concurrencia lista
+ *
+ * 27/03/2019   Pablo		 5		 Cambio en la busqueda de palabra_posterior
+ *
+ * 27/03/2019   Pablo		 6		 Palabra anterior y posterior encontrada
+ *
+ * 28/03/2019   Pablo		 7		 Formato de salida listo
+ *
+ * **************************************************************************/
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -16,7 +48,6 @@ struct resultados{
 	int numero_linea;
 	int inicio_fragmento;
 	int fin_fragmento;
-	std::string linea;
 };
 
 struct signos_puntuacion: std::ctype<char>
@@ -43,14 +74,14 @@ std::mutex sem;
 std::vector<std::thread> v_hilos;
 std::vector<resultados> v_resultados;
 
-/* F1: Abrir Archivo */
+/* Abrir Archivo */
 std::ifstream abrirArchivo(std::string nombre_archivo) {
 	std::ifstream fs;
 	fs.open(nombre_archivo);
 	return fs;
 }
 
-/* F2: Obtener lineas archivo */
+/* Obtener lineas archivo */
 std::vector<int> obtenerLineas(std::ifstream &fs, int n_hilos){
 	fs.clear();
 	fs.seekg(0);
@@ -84,7 +115,7 @@ std::vector<int> obtenerLineas(std::ifstream &fs, int n_hilos){
 	return v_lineas;
 }
 
-/* FAUX Convertir string a vector */
+/* Convertir string a vector */
 std::vector<std::string> vectorLinea(std::string s){
 	std::stringstream ss(s);
 	ss.imbue(std::locale(std::locale(), new signos_puntuacion()));
@@ -94,8 +125,7 @@ std::vector<std::string> vectorLinea(std::string s){
 	return vstrings;
 }
 
-/* F3: buscar una palabra en un fichero */
-
+/* Buscar una palabra en un fichero */
 void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int linea_final, int id_hilo) {
 	std::vector<std::string> vector_linea;
 	std::string linea;
@@ -123,39 +153,27 @@ void buscarPalabra(std::ifstream &fs, std::string keyword,int linea_inicial, int
 					}catch(const std::out_of_range& e){
 						res.palabra_posterior = "";
 					}
-					res.linea = linea;
 					sem.lock();
 					v_resultados.push_back(res);
-					repeticiones++;
 					sem.unlock();
+					repeticiones++;
 				}
 			}
 		}
-	}
-	if(repeticiones == 0){
-		std::cout << "Hilo: " << id_hilo <<" Palabra: "<< keyword << " No encontrada" << std::endl;
-	}else{
-		std::cout << "Hilo: " << id_hilo << " Palabra: "<< keyword << " Encontrada: "<< repeticiones << " veces." << std::endl;
 	}
 }
 
 /* F4: imprimir los resultados de la busqueda por pantalla */
 void imprimeResultados(std::vector<int> aux){
 	resultados res;
-	std::cout << "--------------" << '\n';
+	std::cout << "[SSOOGLE] Resultados de búsqueda: " << '\n';
 	for(unsigned int i = 0; i < v_resultados.size();i++){
 		res = v_resultados.at(i);
-		std::cout << "Resultado: " << '\n';
-		std::cout << "Hilo: " << res.id_hilo << '\n';
-		std::cout << "Palabra encontrada: " << res.palabra_encontrada << '\n';
-		std::cout << "Fragmento: " << res.inicio_fragmento <<" -> " << res.fin_fragmento <<'\n';
-		std::cout << "Linea nº: " << res.numero_linea <<'\n';
-		std::cout << "Linea: " << res.palabra_anterior <<" "<<res.palabra_encontrada<<" "<<res.palabra_posterior<<'\n';
-		std::cout << "--------------" << '\n';
+		std::cout << "[Hilo " << res.id_hilo << " inicio:" << res.inicio_fragmento <<" - final:" << res.fin_fragmento << "] :: línea " << res.numero_linea << " :: ..." << res.palabra_anterior << " " << res.palabra_encontrada << " " <<res.palabra_posterior << " ..." <<'\n';
 	}
 }
 
-/* F5: crea los hilos de busqueda */
+/* Crea los hilos de busqueda */
 void creaHilos(std::vector<int> numHilos,  std::string keyword, std::string nombrearchivo){
 	std::ifstream archivo;
 	int id_hilo = 0;
