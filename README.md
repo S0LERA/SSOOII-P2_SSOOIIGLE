@@ -9,7 +9,7 @@ Se desea implementar un buscador de palabras multihilo en un fichero, que cuente
 
  El archivo donde se quiere buscar debe estar en la ruta del makefile.
 
-`make SS00GLE FICHERO=prueba2 PALABRA=trabajo HILOS=4`
+`make SS00GLE FICHERO=fichero_prueba PALABRA=palabra_prueba HILOS=4`
  - FICHERO: es la ruta del fichero donde se va a buscar la palabra, sin el .txt.
  - PALABRA: es la palabra a buscar.
  - HILOS = es el numero de hilos que se desea que busquen.
