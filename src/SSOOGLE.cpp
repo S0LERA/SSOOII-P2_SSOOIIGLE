@@ -1,4 +1,4 @@
-/****************************************************************************
+/*************************************************************************************
 * Projecto:                Segunda Práctica de SSOO II : SSOOGGLE
 *
 * Nombre del programa:     SSOOGGLE.c
@@ -8,15 +8,15 @@
 * Fecha de creación:       18/03/2019
 *
 * Proposito:               - Busqueda de una palabra en un fichero utilizando
-*														la programación multihilo.
-*												  -	Gestión de la sincronización entre los hilos.
+*							 la programación multihilo.
+*						   - Gestión de la sincronización entre los hilos.
 *
 * Historial de revisión:
 *
-* Fecha        Autor    Ref   Revisión
-* 24/03/2019   Pablo    1     Avance en las funciones del proyecto
+* Fecha        Autor    	Ref      Revisión
+* 24/03/2019   Pablo    	 1       Avance en las funciones del proyecto
 *
-* 25/03/2019		Pablo		 2		 Versión secuencial lista, estructuras listas
+* 25/03/2019   Pablo		 2		 Versión secuencial lista, estructuras listas
 *
 * 25/03/2019   Pablo		 3		 Versión con un hilo
 *
@@ -30,7 +30,9 @@
 *
 * 28/03/2019   Pablo		 8		 Cambiado metodo de join y arreglada concurrencia
 *
-* **************************************************************************/
+* 01/04/2019   Pablo		 9		 Cambiado vector resultados para asegurar orden
+*
+* ***********************************************************************************/
 
 #include <iostream>
 #include <fstream>
@@ -76,7 +78,8 @@ struct signos_puntuacion: std::ctype<char>
 
 std::mutex sem;
 std::vector<std::thread> v_hilos;
-std::vector<resultados> v_resultados;
+std::vector<std::vector<resultados>> v_resultados;
+int repeticiones = 0;
 
 /* Abrir Archivo */
 std::ifstream abrirArchivo(std::string nombre_archivo) {
@@ -136,12 +139,13 @@ void buscarPalabra(std::string nombrearchivo, std::string keyword,int linea_inic
 	std::string linea;
 	int contador =0;
 	resultados res;
-	while (getline(fs, linea)) {																			//Obtener lineas del archivo
-		vector_linea = vectorLinea(linea);															//Pasar linea a vector
+	while (getline(fs, linea)) {												//Obtener lineas del archivo
+		std::transform(linea.begin(),linea.end(),linea.begin(),::tolower);
+		vector_linea = vectorLinea(linea);										//Pasar linea a vector
 		contador ++;
 		if(contador>= linea_inicial && contador<=linea_final){ 					//Para posicionar a cada hilo en su sitio
-			for (unsigned int i = 0; i < vector_linea.size(); i++) {			//Recorrer el vactor con las palabras de la linea
-				if (vector_linea.at(i) == keyword) {												//Buscar la palabra en la linea
+			for (unsigned int i = 0; i < vector_linea.size(); i++) {			//Recorrer el vector con las palabras de la linea
+				if ((vector_linea.at(i).compare(keyword)) == 0) {				//Buscar la palabra en la linea
 					res.id_hilo = id_hilo;
 					res.inicio_fragmento = linea_inicial;
 					res.fin_fragmento = linea_final;
@@ -158,7 +162,8 @@ void buscarPalabra(std::string nombrearchivo, std::string keyword,int linea_inic
 						res.palabra_posterior = "";
 					}
 					sem.lock();
-					v_resultados.push_back(res);
+					v_resultados.at(id_hilo).push_back(res);
+					repeticiones++;
 					sem.unlock();
 				}
 			}
@@ -168,18 +173,22 @@ void buscarPalabra(std::string nombrearchivo, std::string keyword,int linea_inic
 
 /* F4: imprimir los resultados de la busqueda por pantalla */
 void imprimeResultados(std::vector<int> aux){
-	resultados res;
 	std::cout << "[SSOOGLE] Resultados de búsqueda: " << '\n';
-	for(unsigned int i = 0; i < v_resultados.size();i++){
-		res = v_resultados.at(i);
-		std::cout << "[Hilo " << res.id_hilo << " inicio:" << res.inicio_fragmento <<" - final:" << res.fin_fragmento << "] :: línea " << res.numero_linea << " :: ..." << res.palabra_anterior << " " << res.palabra_encontrada << " " <<res.palabra_posterior << " ..." <<'\n';
+	for(std::vector<resultados> v : v_resultados){
+		for(resultados res : v){
+		std::cout << "[Hilo " << res.id_hilo << " inicio:" << res.inicio_fragmento <<" - final:" << res.fin_fragmento << "] :: línea " << res.numero_linea << " :: ..." << res.palabra_anterior << " \033[1;31m" << res.palabra_encontrada << "\033[0m " <<res.palabra_posterior << " ..." <<'\n';
+		}
 	}
+	std::cout << "[SSOOGLE] Repeticiones de la palabra en el archivo: " << repeticiones << "." <<'\n';
+	
 }
 
 /* Crea los hilos de busqueda */
 void creaHilos(std::vector<int> numHilos,  std::string keyword, std::string nombrearchivo){
 	int id_hilo = 0;
+	std::vector<resultados> aux;
 	for (unsigned int i = 0; i < numHilos.size(); i+=2) {
+		v_resultados.push_back(aux);
 		v_hilos.push_back(std::thread(buscarPalabra,nombrearchivo,keyword,numHilos.at(i),numHilos.at(i+1),id_hilo));
 		id_hilo++;
 	}
