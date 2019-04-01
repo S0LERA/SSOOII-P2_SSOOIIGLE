@@ -11,8 +11,12 @@ Se desea implementar un buscador de palabras multihilo en un fichero, que cuente
 
 `make SSOOGLE FICHERO=fichero_prueba PALABRA=palabra_prueba HILOS=numero_hilos`
  - FICHERO: es la ruta del fichero donde se va a buscar la palabra, sin el .txt.
+   - Nota: Para indicar un fichero con espacios se indicara el nombre entre comillas dobles y se representaran los espacios con \
+     - Ejemplo: `FICHERO="fichero\ con\ espacios"`
  - PALABRA: es la palabra a buscar.
  - HILOS: es el numero de hilos que se desea que busquen.
+
+Al terminar la busqueda, se crea un fichero `resultados.txt` donde se encuentran los resultados de la misma.
 
  ## Ejemplo:
  `make SSOOGLE FICHERO=prueba PALABRA=medida HILOS=4`
@@ -30,4 +34,4 @@ Se desea implementar un buscador de palabras multihilo en un fichero, que cuente
 
 ### Versión 3.0:
  - El vector de resultados ha sido modificado para asegurar el orden en la impresión.
- - Añadida función para buscar la palabra en mayúsculas/minúsculas.
+ - Añadida funcionalidad para buscar la palabra en mayúsculas/minúsculas.

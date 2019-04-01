@@ -79,7 +79,6 @@ struct signos_puntuacion: std::ctype<char>
 std::mutex sem;
 std::vector<std::thread> v_hilos;
 std::vector<std::vector<resultados>> v_resultados;
-int repeticiones = 0;
 
 /* Abrir Archivo */
 std::ifstream abrirArchivo(std::string nombre_archivo) {
@@ -137,8 +136,9 @@ void buscarPalabra(std::string nombrearchivo, std::string keyword,int linea_inic
 	std::ifstream fs = abrirArchivo(nombrearchivo);
 	std::vector<std::string> vector_linea;
 	std::string linea;
-	int contador =0;
+	int contador = 0;
 	resultados res;
+	std::transform(keyword.begin(),keyword.end(),keyword.begin(),::tolower);
 	while (getline(fs, linea)) {												//Obtener lineas del archivo
 		std::transform(linea.begin(),linea.end(),linea.begin(),::tolower);
 		vector_linea = vectorLinea(linea);										//Pasar linea a vector
@@ -163,7 +163,6 @@ void buscarPalabra(std::string nombrearchivo, std::string keyword,int linea_inic
 					}
 					sem.lock();
 					v_resultados.at(id_hilo).push_back(res);
-					repeticiones++;
 					sem.unlock();
 				}
 			}
@@ -171,7 +170,7 @@ void buscarPalabra(std::string nombrearchivo, std::string keyword,int linea_inic
 	}
 }
 
-/* F4: imprimir los resultados de la busqueda por pantalla */
+/* Imprimir los resultados de la busqueda por pantalla */
 void imprimeResultados(std::vector<int> aux){
 	std::cout << "[SSOOGLE] Resultados de búsqueda: " << '\n';
 	for(std::vector<resultados> v : v_resultados){
@@ -179,8 +178,6 @@ void imprimeResultados(std::vector<int> aux){
 		std::cout << "[Hilo " << res.id_hilo << " inicio:" << res.inicio_fragmento <<" - final:" << res.fin_fragmento << "] :: línea " << res.numero_linea << " :: ..." << res.palabra_anterior << " \033[1;31m" << res.palabra_encontrada << "\033[0m " <<res.palabra_posterior << " ..." <<'\n';
 		}
 	}
-	std::cout << "[SSOOGLE] Repeticiones de la palabra en el archivo: " << repeticiones << "." <<'\n';
-	
 }
 
 /* Crea los hilos de busqueda */
@@ -195,6 +192,7 @@ void creaHilos(std::vector<int> numHilos,  std::string keyword, std::string nomb
 	for_each(v_hilos.begin(),v_hilos.end(),std::mem_fn(&std::thread::join));
 }
 
+/* Función principal */
 int main(int argc, char *argv[]) {
 	std::ifstream archivo = abrirArchivo(argv[1]);
 	std::vector<int> v_lineas = obtenerLineas(archivo, atoi(argv[3]));
