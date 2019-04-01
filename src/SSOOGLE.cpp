@@ -172,11 +172,16 @@ void buscarPalabra(std::string nombrearchivo, std::string keyword,int linea_inic
 
 /* Imprimir los resultados de la busqueda por pantalla */
 void imprimeResultados(std::vector<int> aux){
-	std::cout << "[SSOOGLE] Resultados de búsqueda: " << '\n';
+	int contador = 0;
+	std::cout << "\033[1;34m[SSOOGLE] Resultados de búsqueda: \033[0m" << '\n';
 	for(std::vector<resultados> v : v_resultados){
 		for(resultados res : v){
-		std::cout << "[Hilo " << res.id_hilo << " inicio:" << res.inicio_fragmento <<" - final:" << res.fin_fragmento << "] :: línea " << res.numero_linea << " :: ..." << res.palabra_anterior << " \033[1;31m" << res.palabra_encontrada << "\033[0m " <<res.palabra_posterior << " ..." <<'\n';
+			std::cout << "[Hilo " << res.id_hilo << " inicio:" << res.inicio_fragmento <<" - final:" << res.fin_fragmento << "] :: línea " << res.numero_linea << " :: ..." << res.palabra_anterior << " \033[1;31m" << res.palabra_encontrada << "\033[0m " <<res.palabra_posterior << " ..." <<'\n';
+			contador++;
 		}
+	}
+	if (contador == 0) {
+		std::cout << "\033[1;31m[SSOOGLE] No hay ninguna aparición de la palabra indicada en el fichero indicado.\033[0m" << '\n';
 	}
 }
 

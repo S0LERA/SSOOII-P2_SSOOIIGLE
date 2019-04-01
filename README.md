@@ -7,7 +7,7 @@ Se desea implementar un buscador de palabras multihilo en un fichero, que cuente
 `make compilar`
  - Para compilar el programa
 
- El archivo donde se quiere buscar debe estar en la ruta del makefile.
+ El archivo donde se quiere buscar debe estar en la carpeta libros.
 
 `make SSOOGLE FICHERO=fichero_prueba PALABRA=palabra_prueba HILOS=numero_hilos`
  - FICHERO: es la ruta del fichero donde se va a buscar la palabra, sin el .txt.
